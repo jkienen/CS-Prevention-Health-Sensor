@@ -24,13 +24,21 @@ The toolkit runs a single script that stitches together two Falcon data sources:
 
 > 🧩 **Signals are OS-specific.** Windows, macOS, and Linux each expose a different set of sensor signals, so each report carries its own columns — that's why the output is split per OS rather than one combined file.
 
+> 🐧 **RFM is more severe on Linux.** It leaves many capabilities non-functional, and remediation usually means fixing the **kernel**, fixing the **OS**, or switching the sensor from **Kernel Mode** to **User Mode**:
+> - **User Mode** — hosts running in User Mode on Linux sensor **7.15 and later** include detection and prevention capabilities equivalent to Kernel Mode, so a User Mode sensor on a supported version is *not* a coverage gap.
+> - **Kernel Mode** — when the sensor is in Kernel Mode, RFM can often be fixed quickly by reattaching the backend and restarting the service:
+>
+> ```bash
+> sudo /opt/CrowdStrike/falconctl -s --backend=auto
+> sudo systemctl restart falcon-sensor
+> ```
+
 ---
 
 ## Requirements
 
 - **CrowdStrike Falcon** with **Zero Trust Assessment** enabled
 - A Falcon **API client** with **Hosts** and **Zero Trust Assessment** read scopes
-- **Python 3.9+**
 
 ---
 
