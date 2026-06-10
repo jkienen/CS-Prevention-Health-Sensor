@@ -115,6 +115,9 @@ Each `<OS>_Prevention-Health-Sensor.csv` carries the host metadata plus one colu
 | `Linux Mode` | Linux sensor mode *(Linux reports only)* |
 | `Host Score` | Sensor configuration score from the assessment |
 | `Item: <signal>` | Per-signal verdict: `OK`, `ATTENTION`, or `Check RFM` |
+| `Reference Month` | Month the report was generated (`MM`) |
+| `Reference Year` | Year the report was generated (`YYYY`) |
+| `Reference Date` | Date the report was generated (`YYYY-MM-DD`) |
 
 > Empty / non-applicable values are written as `-`.
 
