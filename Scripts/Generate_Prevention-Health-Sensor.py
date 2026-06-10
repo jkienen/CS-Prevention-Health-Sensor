@@ -171,6 +171,11 @@ if os.path.exists(env_path):
                 # Keep only the signal columns relevant to this OS, then fill remaining nulls with the empty marker
                 dataframe = dataframe.dropna(axis=1, how="all").fillna(empty)
 
+                # Reference stamp columns — always last
+                dataframe["Reference Month"] = current_date.strftime("%m")
+                dataframe["Reference Year"] = current_date.strftime("%Y")
+                dataframe["Reference Date"] = current_date.strftime("%Y-%m-%d")
+
                 os_csv = os.path.join(parent_directory, f"{host_os}_{BASE_AUDIT}.csv")
                 dataframe.to_csv(os_csv, index=False, encoding="utf-8")
 
