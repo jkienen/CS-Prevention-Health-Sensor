@@ -6,9 +6,9 @@
 
 ## Overview
 
-A CrowdStrike sensor is only as effective as the protection features actually enabled on it. Policies drift, hosts fall into **Reduced Functionality Mode**, and individual prevention controls silently fail — leaving endpoints that *look* protected but aren't.
+A CrowdStrike sensor is only as effective as the protection features actually enabled on it. Policies drift, hosts fall into **Reduced Functionality Mode**, and individual prevention controls silently fail, leaving endpoints that *look* protected but aren't.
 
-This tool queries the Falcon platform for every managed host and cross-references it with the host's **Zero Trust Assessment**, turning each sensor signal into a simple, auditable verdict — **OK** or **ATTENTION** — and exporting one report per operating system. The result is an at-a-glance view of prevention posture across the fleet, so degraded sensors can be found and fixed before they matter.
+This tool queries the Falcon platform for every managed host and cross-references it with the host's **Zero Trust Assessment**, turning each sensor signal into a simple, auditable verdict (**OK** or **ATTENTION**) and exporting one report per operating system. The result is an at-a-glance view of prevention posture across the fleet, so degraded sensors can be found and fixed before they matter.
 
 ---
 
@@ -16,17 +16,17 @@ This tool queries the Falcon platform for every managed host and cross-reference
 
 The toolkit runs a single script that stitches together two Falcon data sources:
 
-- **Stage 1 — Inventory.** The **Hosts API** lists every managed device and pulls its core metadata (hostname, type, OS, hidden state, RFM flag, Linux sensor mode).
-- **Stage 2 — Assessment.** The **Zero Trust Assessment API** is queried in chunks of up to **1000 AIDs** per call, returning each host's `sensor_config` score and the per-signal results. Every signal is normalized to `OK` / `ATTENTION`, with special handling for RFM:
-  - The **RFM signal** itself is the root cause — `OK` when in full functionality, `ATTENTION` otherwise.
+- **Stage 1. Inventory.** The **Hosts API** lists every managed device and pulls its core metadata (hostname, type, OS, hidden state, RFM flag, Linux sensor mode).
+- **Stage 2. Assessment.** The **Zero Trust Assessment API** is queried in chunks of up to **1000 AIDs** per call, returning each host's `sensor_config` score and the per-signal results. Every signal is normalized to `OK` / `ATTENTION`, with special handling for RFM:
+  - The **RFM signal** itself is the root cause: `OK` when in full functionality, `ATTENTION` otherwise.
   - A **Linux host in RFM** marks every other item as `Check RFM`, since RFM is the underlying reason any of them would fail.
-- **Stage 3 — Export.** Hosts are grouped by OS and written to one CSV per platform, dropping signal columns that don't apply to that OS and filling missing values with `-`.
+- **Stage 3. Export.** Hosts are grouped by OS and written to one CSV per platform, dropping signal columns that don't apply to that OS and filling missing values with `-`.
 
-> 🧩 **Signals are OS-specific.** Windows, macOS, and Linux each expose a different set of sensor signals, so each report carries its own columns — that's why the output is split per OS rather than one combined file.
+> 🧩 **Signals are OS-specific.** Windows, macOS, and Linux each expose a different set of sensor signals, so each report carries its own columns. That's why the output is split per OS rather than one combined file.
 
 > 🐧 **RFM is more severe on Linux.** It leaves many capabilities non-functional, and remediation usually means fixing the **kernel**, fixing the **OS**, or switching the sensor from **Kernel Mode** to **User Mode**:
-> - **User Mode** — hosts running in User Mode on Linux sensor **7.15 and later** include detection and prevention capabilities equivalent to Kernel Mode, so a User Mode sensor on a supported version is *not* a coverage gap.
-> - **Kernel Mode** — when the sensor is in Kernel Mode, RFM can often be fixed quickly by reattaching the backend and restarting the service:
+> - **User Mode.** Hosts running in User Mode on Linux sensor **7.15 and later** include detection and prevention capabilities equivalent to Kernel Mode, so a User Mode sensor on a supported version is *not* a coverage gap.
+> - **Kernel Mode.** When the sensor is in Kernel Mode, RFM can often be fixed quickly by reattaching the backend and restarting the service:
 >
 > ```bash
 > sudo /opt/CrowdStrike/falconctl -s --backend=auto
@@ -56,10 +56,16 @@ source .venv/bin/activate        # Linux / macOS
 pip install -r Scripts/requirements.txt
 ```
 
-| Dependency | Purpose |
-|---|---|
-| `crowdstrike-falconpy` | Official CrowdStrike Falcon SDK (Hosts + Zero Trust Assessment APIs) |
-| `python-dotenv` | Loads API credentials from `.env` |
+<table width="100%">
+<thead>
+<tr><th align="left">Dependency<div><img width="300" height="1" alt=""></div></th><th align="left">Purpose<div><img width="900" height="1" alt=""></div></th></tr>
+</thead>
+<tbody>
+<tr><td><code>crowdstrike-falconpy</code></td><td>Official CrowdStrike Falcon SDK (Hosts + Zero Trust Assessment APIs)</td></tr>
+<tr><td><code>pandas</code></td><td>Groups hosts by OS and writes the per-OS CSV reports</td></tr>
+<tr><td><code>python-dotenv</code></td><td>Loads API credentials from <code>.env</code></td></tr>
+</tbody>
+</table>
 
 ### 2. API credentials
 
@@ -76,9 +82,9 @@ SECRET_ID="your-falcon-client-secret"
 
 ## Usage
 
-The toolkit is a single script — run it to generate the current month's reports:
+The toolkit is a single script. Run it to generate the current month's reports:
 
-### `Generate_Prevention-Health-Sensor.py` — inventory, assess, and export
+### `Generate_Prevention-Health-Sensor.py`: inventory, assess, and export
 
 Lists every managed host, enriches each with its Zero Trust Assessment signals, normalizes them to `OK` / `ATTENTION`, and writes one CSV per OS.
 
@@ -89,11 +95,11 @@ python Scripts/Generate_Prevention-Health-Sensor.py
 → `Datas/<MM-YYYY>/Mac_Prevention-Health-Sensor.csv`
 → `Datas/<MM-YYYY>/Linux_Prevention-Health-Sensor.csv`
 
-> 🔧 Device inventory is capped at `filter_limit` (**5000** hosts) at the top of Part 2 — raise it if your fleet is larger.
+> 🔧 Device inventory is capped at `filter_limit` (**5000** hosts) at the top of Part 2. Raise it if your fleet is larger.
 >
 > ✅ Reports are generated only for the operating systems in `target_os` (**Windows, Mac, Linux**).
 
-**Suggested cadence:** run **monthly** — output is bucketed into a `MM-YYYY` folder, so each run produces a fresh dated snapshot of fleet posture.
+**Suggested cadence:** run **monthly**. Output is bucketed into a `MM-YYYY` folder, so each run produces a fresh dated snapshot of fleet posture.
 
 ---
 
@@ -103,21 +109,25 @@ Each `<OS>_Prevention-Health-Sensor.csv` carries the host metadata plus one colu
 
 ![Example prevention health report](Files/prevention-health-report.png)
 
-
-| Field | Description |
-|---|---|
-| `Host Id` | Falcon device/agent id (AID) |
-| `Host Name` | Hostname |
-| `Host Type` | Product type (Workstation / Server / …) |
-| `Host OS` | Platform (Windows / Mac / Linux) |
-| `Host State` | Visibility state (e.g. `Normal`, `Hidden`) |
-| `RFM` | `True` if the host is in Reduced Functionality Mode |
-| `Linux Mode` | Linux sensor mode *(Linux reports only)* |
-| `Host Score` | Sensor configuration score from the assessment |
-| `Item: <signal>` | Per-signal verdict: `OK`, `ATTENTION`, or `Check RFM` |
-| `Reference Month` | Month the report was generated (`MM`) |
-| `Reference Year` | Year the report was generated (`YYYY`) |
-| `Reference Date` | Date the report was generated (`YYYY-MM-DD`) |
+<table width="100%">
+<thead>
+<tr><th align="left">Field<div><img width="300" height="1" alt=""></div></th><th align="left">Description<div><img width="900" height="1" alt=""></div></th></tr>
+</thead>
+<tbody>
+<tr><td><code>Host Id</code></td><td>Falcon device/agent id (AID)</td></tr>
+<tr><td><code>Host Name</code></td><td>Hostname</td></tr>
+<tr><td><code>Host Type</code></td><td>Product type (Workstation / Server / …)</td></tr>
+<tr><td><code>Host OS</code></td><td>Platform (Windows / Mac / Linux)</td></tr>
+<tr><td><code>Host State</code></td><td>Visibility state (e.g. <code>Normal</code>, <code>Hidden</code>)</td></tr>
+<tr><td><code>RFM</code></td><td><code>True</code> if the host is in Reduced Functionality Mode</td></tr>
+<tr><td><code>Linux Mode</code></td><td>Linux sensor mode <em>(Linux reports only)</em></td></tr>
+<tr><td><code>Host Score</code></td><td>Sensor configuration score from the assessment</td></tr>
+<tr><td><code>Item: &lt;signal&gt;</code></td><td>Per-signal verdict: <code>OK</code>, <code>ATTENTION</code>, or <code>Check RFM</code></td></tr>
+<tr><td><code>Reference Month</code></td><td>Month the report was generated (<code>MM</code>)</td></tr>
+<tr><td><code>Reference Year</code></td><td>Year the report was generated (<code>YYYY</code>)</td></tr>
+<tr><td><code>Reference Date</code></td><td>Date the report was generated (<code>YYYY-MM-DD</code>)</td></tr>
+</tbody>
+</table>
 
 > Empty / non-applicable values are written as `-`.
 
@@ -141,9 +151,9 @@ Crowdstrike-Prevention-Health-Sensor/
 
 ## Roadmap / Next Steps
 
-- **Trend over time** — compare consecutive monthly snapshots to highlight hosts whose posture *degraded* since the last run.
-- **Alerting** — push hosts with `ATTENTION` signals or active RFM to a ticket / chat channel instead of a static CSV.
-- **Combined dashboard** — feed the per-OS reports into a single view for fleet-wide prevention coverage metrics.
+- **Trend over time.** Compare consecutive monthly snapshots to highlight hosts whose posture *degraded* since the last run.
+- **Alerting.** Push hosts with `ATTENTION` signals or active RFM to a ticket / chat channel instead of a static CSV.
+- **Combined dashboard.** Feed the per-OS reports into a single view for fleet-wide prevention coverage metrics.
 
 ---
 
