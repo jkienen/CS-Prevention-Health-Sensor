@@ -2,6 +2,19 @@
 
 > A reporting tool that audits the **sensor & prevention health** of every CrowdStrike-protected host using the **Zero Trust Assessment** signals, producing a per-OS snapshot of which protection features are enabled, degraded, or in **Reduced Functionality Mode (RFM)**.
 
+<p align="center">
+  <img src="Files/prevention-health-report.png" alt="Example prevention health report: per-host sensor score alongside an OK / ATTENTION verdict for each Zero Trust Assessment signal, one CSV per operating system.">
+</p>
+
+<table width="100%">
+<thead>
+<tr><th align="left">Before<div><img width="300" height="1" alt=""></div></th><th align="left">Now<div><img width="300" height="1" alt=""></div></th><th align="left">What it buys<div><img width="400" height="1" alt=""></div></th></tr>
+</thead>
+<tbody>
+<tr><td>policies drift and sensors silently fall into Reduced Functionality Mode — endpoints that look protected but aren't</td><td>every host's Zero Trust Assessment signals normalized into a simple OK / ATTENTION verdict, one report per OS</td><td>degraded sensors found and fixed before they matter</td></tr>
+</tbody>
+</table>
+
 ---
 
 ## Overview
@@ -9,8 +22,6 @@
 A CrowdStrike sensor is only as effective as the protection features actually enabled on it. Policies drift, hosts fall into **Reduced Functionality Mode**, and individual prevention controls silently fail, leaving endpoints that *look* protected but aren't.
 
 This tool queries the Falcon platform for every managed host and cross-references it with the host's **Zero Trust Assessment**, turning each sensor signal into a simple, auditable verdict (**OK** or **ATTENTION**) and exporting one report per operating system. The result is an at-a-glance view of prevention posture across the fleet, so degraded sensors can be found and fixed before they matter.
-
----
 
 ## How It Works
 
@@ -35,14 +46,16 @@ The toolkit runs a single script that stitches together two Falcon data sources:
 
 ---
 
-## Requirements
+<details>
+<summary><strong>Requirements</strong> (click to expand)</summary>
 
 - **CrowdStrike Falcon** with **Zero Trust Assessment** enabled
 - A Falcon **API client** with **Hosts** and **Zero Trust Assessment** read scopes
 
----
+</details>
 
-## Setup
+<details>
+<summary><strong>Setup</strong> (click to expand)</summary>
 
 ### 1. Environment and dependencies
 
@@ -78,15 +91,12 @@ SECRET_ID="your-falcon-client-secret"
 
 > ⚠️ **Never commit `.env`.** Add it to `.gitignore`. If credentials were ever committed, revoke and rotate them in the Falcon console.
 
----
+</details>
 
-## Usage
+<details>
+<summary><strong>Usage</strong> (click to expand)</summary>
 
 The toolkit is a single script. Run it to generate the current month's reports:
-
-### `Generate_Prevention-Health-Sensor.py`: inventory, assess, and export
-
-Lists every managed host, enriches each with its Zero Trust Assessment signals, normalizes them to `OK` / `ATTENTION`, and writes one CSV per OS.
 
 ```bash
 python Scripts/Generate_Prevention-Health-Sensor.py
@@ -101,13 +111,12 @@ python Scripts/Generate_Prevention-Health-Sensor.py
 
 **Suggested cadence:** run **monthly**. Output is bucketed into a `MM-YYYY` folder, so each run produces a fresh dated snapshot of fleet posture.
 
----
+</details>
 
-## Report Fields
+<details>
+<summary><strong>Report Fields</strong> (click to expand)</summary>
 
 Each `<OS>_Prevention-Health-Sensor.csv` carries the host metadata plus one column per sensor signal:
-
-![Example prevention health report](Files/prevention-health-report.png)
 
 <table width="100%">
 <thead>
@@ -131,9 +140,10 @@ Each `<OS>_Prevention-Health-Sensor.csv` carries the host metadata plus one colu
 
 > Empty / non-applicable values are written as `-`.
 
----
+</details>
 
-## File Structure
+<details>
+<summary><strong>File Structure</strong> (click to expand)</summary>
 
 ```
 Crowdstrike-Prevention-Health-Sensor/
@@ -147,13 +157,16 @@ Crowdstrike-Prevention-Health-Sensor/
     └── prevention-health-report.png           # Example: generated prevention health report
 ```
 
----
+</details>
 
-## Roadmap / Next Steps
+<details>
+<summary><strong>Roadmap / Next Steps</strong> (click to expand)</summary>
 
 - **Trend over time.** Compare consecutive monthly snapshots to highlight hosts whose posture *degraded* since the last run.
 - **Alerting.** Push hosts with `ATTENTION` signals or active RFM to a ticket / chat channel instead of a static CSV.
 - **Combined dashboard.** Feed the per-OS reports into a single view for fleet-wide prevention coverage metrics.
+
+</details>
 
 ---
 
